@@ -22,7 +22,7 @@ const stream = new fs.ReadStream(filePath, {encoding: 'utf8'});
 
 stream.on('readable', function() {
     let data = stream.read();
-    if(data !== null) console.log(data);
+    if(data !== null) process.stdout.write(data);
 });
 
 stream.on('end', function() {
