@@ -18,7 +18,7 @@ const readUser = readLN.createInterface({
 process.on('exit', byebye);
 
 function writeAnswer(){
-    readUser.question('Write down any text: ', (answer) => {
+    readUser.question("Write any text and press 'Enter': ", (answer) => {
         if(answer === 'exit') {
             byebye();
         } 
