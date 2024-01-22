@@ -15,21 +15,18 @@ const readUser = readLN.createInterface({
     output: process.stdout,
 });
 
-process.on('exit', byebye);
+process.on('exit', () => {
+    process.stdout.write("======= It was pleasure to work with you! =========");
+});
 
 function writeAnswer(){
     readUser.question("Write any text and press 'Enter': ", (answer) => {
         if(answer === 'exit') {
-            byebye();
+            process.exit();
         } 
         writeToFile.write(answer);
         writeAnswer();
     })
-}
-
-function byebye() {
-    process.stdout.write("======= It was pleasure to work with you! =========");
-    process.exit();
 }
 
 writeAnswer();
