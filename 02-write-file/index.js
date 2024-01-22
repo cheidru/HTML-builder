@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const readLN = require('readline');
 
-filePath = path.join('02-write-file', 'text.txt');
+filePath = path.resolve('02-write-file', 'text.txt');
 
 fs.open(filePath, 'w', (err) => {
     if (err) process.stdout.write('Не могу создать файл');

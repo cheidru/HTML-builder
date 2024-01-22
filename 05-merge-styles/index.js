@@ -1,45 +1,32 @@
 const fs = require('fs');
 const path = require('path');
 
-const dirPath = path.resolve('05-merge-styles');
+// const dirPath = path.resolve('05-merge-styles');
 const stylesDirPath = path.resolve('05-merge-styles', 'styles');
-const styleCopyDirPath = path.resolve('05-merge-styles', 'project-dist');
+const stylesCopyDirPath = path.resolve('05-merge-styles', 'project-dist');
+const bundleFilePath = path.resolve('05-merge-styles', 'project-dist', 'bundle.css');
 
 // Check if project-dist folder exists and create/re-create it
-fs.readdir(dirPath, () => {
-    if(items.includes('project-dist')) {
-        recomposeProjectDist();
-    } else {
-        composeProjectDist();
-    }    
-})
-
-function composeProjectDist() {
-    fs.mkdir(styleCopyDirPath, () => {});
+fs.readdir(stylesCopyDirPath, (err, items) => {
+    if(items.includes('bundle.css')) {
+        fs.unlink(bundleFilePath, () => {});
+    }
+    fs.open(bundleFilePath, 'w', (err) => {
+        if(err) console.log('Ошибка создания файла bundle.css')
+    });
+    const writeToFile = fs.createWriteStream(bundleFilePath,  {encoding: "utf-8", flags:"a" });
     fs.readdir(stylesDirPath, (err, files) => {
         for (const file of files) {
-
-
-
-
-            const filePath = path.resolve(fileDirPath, file);
-            const fileCopyPath = path.resolve(fileCopyDirPath, file);
-            fs.copyFile(filePath, fileCopyPath, () => {});
-
-
-            
+            const filePath = path.resolve(stylesDirPath, file);
+            fs.stat(filePath, (err, stats) => {
+                if (stats.isFile() && path.extname(filePath) === '.css') {
+                    const readFromFile = fs.createReadStream(filePath,  {encoding: "utf-8"});
+                    readFromFile.on('data', (data) => {
+                        writeToFile.write(data);
+                    });
+                }
+            });
         }
     })
-}
+})
 
-function recomposeProjectDist() {
-    fs.readdir(styleCopyDirPath, (err, files) => {
-        for(const file of files) {
-            const filePath = path.resolve(styleCopyDirPath, file);
-            fs.unlink(filePath, () => {});
-        }
-        fs.rmdir(styleCopyDirPath, () => {
-            composeProjectDist();
-        });
-    });
-}
