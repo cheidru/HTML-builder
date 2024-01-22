@@ -7,16 +7,7 @@ const fileCopyDirPath = path.resolve('04-copy-directory', 'files-copy');
 
 fs.readdir(dirPath, (err, items) => {
     if(items.includes('files-copy')) {
-        fs.readdir(fileCopyDirPath, (err, files) => {
-            for(const file of files) {
-                const filePath = path.resolve(fileCopyDirPath, file);
-                fs.unlink(filePath, () => {});
-            }
-            fs.rmdir(fileCopyDirPath, () => {
-                copyFilesDir();
-            });
-
-        })        
+        rewriteCopyFilesDir();
     } else {
         copyFilesDir();
     }    
@@ -31,4 +22,16 @@ function copyFilesDir() {
             fs.copyFile(filePath, fileCopyPath, () => {});
         }
     })
+}
+
+function rewriteCopyFilesDir() {
+    fs.readdir(fileCopyDirPath, (err, files) => {
+        for(const file of files) {
+            const filePath = path.resolve(fileCopyDirPath, file);
+            fs.unlink(filePath, () => {});
+        }
+        fs.rmdir(fileCopyDirPath, () => {
+            copyFilesDir();
+        });
+    });
 }
