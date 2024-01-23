@@ -1,13 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
-// const dirPath = path.resolve('05-merge-styles');
 const stylesDirPath = path.resolve('05-merge-styles', 'styles');
 const stylesCopyDirPath = path.resolve('05-merge-styles', 'project-dist');
 const bundleFilePath = path.resolve('05-merge-styles', 'project-dist', 'bundle.css');
 
 
-function mergeStyles(stylesCopyPath, mergedFilePath, stylesPath) {
+const mergeStyles = function(stylesCopyPath, mergedFilePath, stylesPath) {
     fs.readdir(stylesCopyPath, (err, items) => {
         if(items.includes('bundle.css')) {
             fs.unlink(mergedFilePath, () => {});
@@ -33,3 +32,6 @@ function mergeStyles(stylesCopyPath, mergedFilePath, stylesPath) {
 }
 
 mergeStyles(stylesCopyDirPath, bundleFilePath, stylesDirPath);
+
+module.exports = mergeStyles;
+
