@@ -20,6 +20,9 @@ function makeDistFolder() {
             console.log('папка существует');
             clearFolder(distDirPath)
         };
+        copyAsset(assetsDirPath, distAssetsDirPath);
+        makeHTML (componentDirPath);
+        mergeStyles(distDirPath, distStylePath, stylesDirPath);
     });
 }
 
@@ -59,8 +62,6 @@ function copyAsset(origFolder, copyFolder) {
     })
 }
 
-makeDistFolder();
-copyAsset(assetsDirPath, distAssetsDirPath);
 
 function makeHTML (componFolder) {
     console.log('Компонуем html');
@@ -109,7 +110,5 @@ function mergeStyles(stylesCopyPath, mergedFilePath, stylesPath) {
 }
 
 
+
 makeDistFolder();
-copyAsset(assetsDirPath, distAssetsDirPath);
-makeHTML (componentDirPath);
-mergeStyles(distDirPath, distStylePath, stylesDirPath);
