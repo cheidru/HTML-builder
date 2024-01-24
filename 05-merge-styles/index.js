@@ -33,5 +33,3 @@ const mergeStyles = function(stylesCopyPath, mergedFilePath, stylesPath) {
 
 mergeStyles(stylesCopyDirPath, bundleFilePath, stylesDirPath);
 
-module.exports = mergeStyles;
-

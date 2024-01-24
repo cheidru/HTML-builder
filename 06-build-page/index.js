@@ -1,7 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const mergeStyleModule = require('./05-merge-styles');
-const copyAssets = require('./04-copy-directory');
 
 const componentDirPath = path.resolve('06-build-page', 'components');
 const distDirPath = path.resolve('06-build-page', 'project-dist');
@@ -11,42 +9,107 @@ const distStylePath = path.resolve('06-build-page', 'project-dist', 'style.css')
 const stylesDirPath = path.resolve('06-build-page', 'styles');
 const assetsDirPath = path.resolve('06-build-page', 'assets');
 const templateFilePath = path.resolve('06-build-page', 'template.html');
-const articlesFilePath = path.resolve('06-build-page', 'components', 'articles.html');
-const footerFilePath = path.resolve('06-build-page', 'components', 'footer.html');
-const headerFilePath = path.resolve('06-build-page', 'components', 'header.html');
 
 let indexStr = '';
-let articlesStr = '';
-let footerStr = '';
-let headerStr = '';
+let templateStr = '';
 
-fs.mkdir(distDirPath, () => {});
 
-const getTemplateContent = fs.createReadStream(templateFilePath, {encoding: 'utf8'});
-getTemplateContent.on('data', (data) => {
-    indexStr = data;
-});
+function makeDistFolder() {
+    fs.mkdir(distDirPath, (err) => {
+        if (err) {
+            console.log('папка существует');
+            clearFolder(distDirPath)
+        };
+    });
+}
 
-const getArticlesContent = fs.createReadStream(articlesFilePath, {encoding: 'utf8'});
-getArticlesContent.on('data', (data) => {
-    articlesStr = data;
-    indexStr = indexStr.replace('{{articles}}', articlesStr);
-});
+function clearFolder(folderPath) {
+    fs.readdir(folderPath, (err, files) => {
+        for(const file of files) {
+            const filePath = path.resolve(folderPath, file);            
+            fs.stat(filePath, (err, stats) => {
+                if (stats.isFile()) {
+                    console.log('удаляем файл');
+                    fs.unlink(filePath, () => {});
+                } else {
+                    clearFolder(filePath);
+                }
+            })
+        }
+        console.log('удаляем папку');
+        fs.rmdir(folderPath, () => {});                
+    })
+}
 
-const getFooterContent = fs.createReadStream(footerFilePath, {encoding: 'utf8'});
-getFooterContent.on('data', (data) => {
-    footerStr = data;
-    indexStr = indexStr.replace('{{footer}}', footerStr);
-});
+function copyAsset(origFolder, copyFolder) {
+    fs.readdir(origFolder, (err, files) => {
+        for (const file of files) {
+            const filePath = path.resolve(origFolder, file);
+            fs.stat(filePath, (err, stats) => {
+                if (stats.isFile()) {
+                    const fileCopyPath = path.resolve(copyFolder, file);
+                    fs.copyFile(filePath, fileCopyPath, () => {});
+                } else {
+                    const folderCopyPath = path.resolve(copyFolder, file);
+                    fs.rmdir(folderCopyPath, () => {});
+                    copyAsset(filePath, folderCopyPath);
+                }
+            })
+        }
+    })
+}
 
-const getHeaderContent = fs.createReadStream(headerFilePath, {encoding: 'utf8'});
-getHeaderContent.on('data', (data) => {
-    headerStr = data;
-    indexStr = indexStr.replace('{{header}}', headerStr);
-    const getIndexFile = fs.createWriteStream(indexFilePath, {encoding: "utf-8"});
-    console.log(indexStr);
-    getIndexFile.write(indexStr);
-});
+makeDistFolder();
+copyAsset(assetsDirPath, distAssetsDirPath);
 
-mergeStyleModule.mergeStyles(distDirPath, distStylePath, stylesDirPath);
-copyAssets.dirCopy(distDirPath, assetsDirPath, distAssetsDirPath);
+function makeHTML (componFolder) {
+    console.log('Компонуем html');
+    fs.readdir(componFolder, (err, files) => {
+        const getTemplateContent = fs.createReadStream(templateFilePath, {encoding: 'utf8'});
+        getTemplateContent.on('data', (data) => {
+            indexStr = data;
+        });
+        for (const file of files) {
+            const filePath = path.resolve(componFolder, file);
+            const templateName = `{{${file.slice(0, -3)}}}`;
+            const templateSream = fs.createReadStream(filePath, {encoding: 'utf8'});
+            templateSream.on('data', (data) => {
+                templateStr = data;
+                indexStr = indexStr.replace(templateName, templateStr);
+            });
+        }
+        const getIndexFile = fs.createWriteStream(indexFilePath, {encoding: "utf-8"});
+        getIndexFile.write(indexStr);
+    })
+}
+
+function mergeStyles(stylesCopyPath, mergedFilePath, stylesPath) {
+    fs.readdir(stylesCopyPath, (err, items) => {
+        if(items.includes('bundle.css')) {
+            fs.unlink(mergedFilePath, () => {});
+        }
+        fs.open(mergedFilePath, 'w', (err) => {
+            if(err) console.log('Ошибка создания файла bundle.css')
+        });
+        const writeToFile = fs.createWriteStream(mergedFilePath,  {encoding: "utf-8", flags:"a" });
+        fs.readdir(stylesPath, (err, files) => {
+            for (const file of files) {
+                const filePath = path.resolve(stylesPath, file);
+                fs.stat(filePath, (err, stats) => {
+                    if (stats.isFile() && path.extname(filePath) === '.css') {
+                        const readFromFile = fs.createReadStream(filePath,  {encoding: "utf-8"});
+                        readFromFile.on('data', (data) => {
+                            writeToFile.write(data);
+                        });
+                    }
+                });
+            }
+        })
+    })
+}
+
+
+makeDistFolder();
+copyAsset(assetsDirPath, distAssetsDirPath);
+makeHTML (componentDirPath);
+mergeStyles(distDirPath, distStylePath, stylesDirPath);
