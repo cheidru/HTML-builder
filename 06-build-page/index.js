@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const projectPath = path.resolve('06-build-page');
 const componentDirPath = path.resolve('06-build-page', 'components');
 const distDirPath = path.resolve('06-build-page', 'project-dist');
 const indexFilePath = path.resolve('06-build-page', 'project-dist', 'index.html');
@@ -14,38 +15,52 @@ let indexStr = '';
 let templateStr = '';
 
 
-function makeDistFolder() {
-    fs.mkdir(distDirPath, (err) => {
-        if (err) {
-            console.log('папка существует');
-            clearFolder(distDirPath)
-        };
-        copyAsset(assetsDirPath, distAssetsDirPath);
-        makeHTML (componentDirPath);
-        mergeStyles(distDirPath, distStylePath, stylesDirPath);
+async function makeDistFolder() {
+    fs.readdir(projectPath, (err, data) => {
+        console.log('удаляем папку');
+        if(data.includes('project-dist')) clearFolder(distDirPath);
     });
+
+    // await fs.promises.mkdir(distDirPath, (err) => {
+    //     if (err) throw err;
+    // });
+    // copyAsset(assetsDirPath, distAssetsDirPath);
+    // makeHTML (componentDirPath);
+    // mergeStyles(distDirPath, distStylePath, stylesDirPath);
 }
 
 function clearFolder(folderPath) {
     fs.readdir(folderPath, (err, files) => {
-        for(const file of files) {
-            const filePath = path.resolve(folderPath, file);            
-            fs.stat(filePath, (err, stats) => {
-                if (stats.isFile()) {
-                    console.log('удаляем файл');
-                    fs.unlink(filePath, () => {});
-                } else {
-                    clearFolder(filePath);
-                }
-            })
-        }
-        console.log('удаляем папку');
-        fs.rmdir(folderPath, () => {});                
+        if (err) {
+            console.log('Ошибка чтения папки project-dist');
+        } else {
+            for(const file of files) {
+                const filePath = path.resolve(folderPath, file);            
+                fs.stat(filePath, (err, stats) => {
+                    console.log(file);
+                    if (stats.isFile()) {
+                        console.log('удаляем файл');
+                        fs.unlink(filePath, () => {});
+                    } else {
+                        console.log('удаляем папку');
+                        fs.rmdir(folderPath, (e) => {
+                            if (e) {
+                                console.log('не могу удалить папку');
+                                clearFolder(filePath);
+                            }
+                        })
+
+                    }
+                })
+
+            }
+
+        }                
     })
 }
 
-function copyAsset(origFolder, copyFolder) {
-    fs.readdir(origFolder, (err, files) => {
+async function copyAsset(origFolder, copyFolder) {
+    await fs.promises.readdir(origFolder, (err, files) => {
         for (const file of files) {
             const filePath = path.resolve(origFolder, file);
             fs.stat(filePath, (err, stats) => {
@@ -63,9 +78,9 @@ function copyAsset(origFolder, copyFolder) {
 }
 
 
-function makeHTML (componFolder) {
+async function makeHTML (componFolder) {
     console.log('Компонуем html');
-    fs.readdir(componFolder, (err, files) => {
+    await fs.promises.readdir(componFolder, (err, files) => {
         const getTemplateContent = fs.createReadStream(templateFilePath, {encoding: 'utf8'});
         getTemplateContent.on('data', (data) => {
             indexStr = data;
@@ -108,7 +123,5 @@ function mergeStyles(stylesCopyPath, mergedFilePath, stylesPath) {
         })
     })
 }
-
-
 
 makeDistFolder();
