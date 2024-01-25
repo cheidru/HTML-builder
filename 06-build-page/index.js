@@ -13,12 +13,15 @@ const templateFilePath = path.resolve('06-build-page', 'template.html');
 
 let indexStr = '';
 let templateStr = '';
+let folders = [];
 
 
 async function makeDistFolder() {
     fs.readdir(projectPath, (err, data) => {
-        console.log('удаляем папку');
-        if(data.includes('project-dist')) clearFolder(distDirPath);
+        if(data.includes('project-dist')) {
+            folders = [];
+            clearFolder(distDirPath);
+        }
     });
 
     // await fs.promises.mkdir(distDirPath, (err) => {
@@ -29,38 +32,44 @@ async function makeDistFolder() {
     // mergeStyles(distDirPath, distStylePath, stylesDirPath);
 }
 
-function clearFolder(folderPath) {
-    console.log('удаляем папку', folderPath);
-    fs.readdir(folderPath, (err, files) => {
+async function clearFolder(folderPath) {
+    console.log('---------------------удаляем папку---------------------', folderPath);
+    await fs.promises.readdir(folderPath, (err, files) => {
+    // fs.rmdir(folderPath, (err, files) => { 
+        console.log('Читаем папку ', folderPath);
+        // folders.push(folderPath);
         if (err) {
             console.log('Ошибка чтения папки project-dist');
         } else {
+            console.log('Проходим по files ', files);
             for(const file of files) {
                 const filePath = path.resolve(folderPath, file);            
                 fs.stat(filePath, (err, stats) => {
-                    console.log(file);
                     if (stats.isFile()) {
-                        console.log('удаляем файл');
+                        console.log('удаляем файл ', file);
                         fs.unlink(filePath, () => {});
                     } else {
-                        console.log('удаляем папку', filePath);
-                        fs.rmdir(filePath, (e) => {
-                            if (e) {
-                                console.log('не могу удалить папку', filePath);
-                                clearFolder(filePath);
-                                fs.rmdir(filePath, (e) => {
-                                    if(e) console.log('еще раз не могу удалить папку');})
-                            }
-                        })
-
+                        folders.push(filePath);
+                        console.log('добавляем в массив ',folders, 'папку ',filePath);
+                        clearFolder(filePath);
                     }
                 })
-
             }
-
+            // console.log('удаляем папки из массива', folders);
+            // for(const fold of folders) {
+            //     console.log(fold);
+            //     fs.rmdir(folders.pop(), (e) => {
+            //         if (e) {
+            //             console.log('не могу удалить папку', fold);
+            //         }
+            //     })
+            // }
         }
-        fs.rmdir(folderPath, (e) => {
-            if(e) console.log('не могу удалить папку', folderPath);})
+    })
+    fs.rmdir(folderPath, (e) => {
+        if (e) {
+            console.log('не могу удалить папку', folderPath);
+        }
     })
 }
 
