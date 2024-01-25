@@ -30,6 +30,7 @@ async function makeDistFolder() {
 }
 
 function clearFolder(folderPath) {
+    console.log('удаляем папку', folderPath);
     fs.readdir(folderPath, (err, files) => {
         if (err) {
             console.log('Ошибка чтения папки project-dist');
@@ -42,11 +43,13 @@ function clearFolder(folderPath) {
                         console.log('удаляем файл');
                         fs.unlink(filePath, () => {});
                     } else {
-                        console.log('удаляем папку');
-                        fs.rmdir(folderPath, (e) => {
+                        console.log('удаляем папку', filePath);
+                        fs.rmdir(filePath, (e) => {
                             if (e) {
-                                console.log('не могу удалить папку');
+                                console.log('не могу удалить папку', filePath);
                                 clearFolder(filePath);
+                                fs.rmdir(filePath, (e) => {
+                                    if(e) console.log('еще раз не могу удалить папку');})
                             }
                         })
 
@@ -55,7 +58,9 @@ function clearFolder(folderPath) {
 
             }
 
-        }                
+        }
+        fs.rmdir(folderPath, (e) => {
+            if(e) console.log('не могу удалить папку', folderPath);})
     })
 }
 
