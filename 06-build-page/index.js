@@ -32,25 +32,24 @@ async function makeDistFolder() {
     // mergeStyles(distDirPath, distStylePath, stylesDirPath);
 }
 
-async function clearFolder(folderPath) {
+function clearFolder(folderPath) {
     console.log('---------------------удаляем папку---------------------', folderPath);
-    await fs.promises.readdir(folderPath, (err, files) => {
+    fs.readdir(folderPath, (err, files) => {
     // fs.rmdir(folderPath, (err, files) => { 
         console.log('Читаем папку ', folderPath);
         // folders.push(folderPath);
         if (err) {
-            console.log('Ошибка чтения папки project-dist');
+            console.log('Ошибка чтения папки ', folderPath);
         } else {
             console.log('Проходим по files ', files);
             for(const file of files) {
+                console.log('Текущий file ', file);
                 const filePath = path.resolve(folderPath, file);            
                 fs.stat(filePath, (err, stats) => {
                     if (stats.isFile()) {
                         console.log('удаляем файл ', file);
                         fs.unlink(filePath, () => {});
                     } else {
-                        folders.push(filePath);
-                        console.log('добавляем в массив ',folders, 'папку ',filePath);
                         clearFolder(filePath);
                     }
                 })
@@ -65,12 +64,14 @@ async function clearFolder(folderPath) {
             //     })
             // }
         }
+        fs.rmdir(folderPath, (e) => {
+            console.log('Удаляем папку ', folderPath);
+            if (e) {
+                console.log('не могу удалить папку', folderPath);
+            }
+        })
     })
-    fs.rmdir(folderPath, (e) => {
-        if (e) {
-            console.log('не могу удалить папку', folderPath);
-        }
-    })
+
 }
 
 async function copyAsset(origFolder, copyFolder) {
